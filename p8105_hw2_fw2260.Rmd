@@ -1,0 +1,66 @@
+---
+title: "Homework 2"
+author: "Lily Wang"
+date: "9/22/2020"
+output: github_document
+---
+
+This is my solution to Homework 2.
+
+## Problem 1
+
+```{r libraries}
+library(tidyverse)
+library(readxl)
+```
+
+Read in and clean the Mr. Trash Wheel dataset:
+```{r clean_trashwheel}
+trashwheel_df <- 
+  read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+    sheet = "Mr. Trash Wheel",
+    range = cell_cols("A:N")) %>% 
+  janitor::clean_names() %>% 
+  drop_na(dumpster) %>% 
+  mutate(sports_balls = as.integer(round(sports_balls)))
+```
+
+Read in and clean the 2017 and 2018 precipitation data:
+```{r clean_precip}
+precip2017_df <-
+  read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+    sheet = "2017 Precipitation",
+    skip = 1) %>% 
+  janitor::clean_names() %>% 
+  drop_na(month) %>% 
+  mutate(year = 2017) %>% 
+  relocate(year)
+
+precip2018_df <-
+  read_excel("./data/Trash-Wheel-Collection-Totals-8-6-19.xlsx",
+    sheet = "2018 Precipitation",
+    skip = 1) %>% 
+  janitor::clean_names() %>% 
+  drop_na(month) %>% 
+  mutate(year = 2018) %>% 
+  relocate(year)
+```
+
+Make a dataframe with month names. Combine the two precipitation datasets and join the month dataframe with the result:
+```{r}
+month_df <-
+  tibble(
+    month = 1:12,
+    month_name = month.name
+  )
+
+precip_df <-
+  bind_rows(precip2017_df, precip2018_df) %>% 
+  left_join(., month_df, by = "month") %>% 
+  relocate(year, month, month_name)
+```
+This dataset contains information from the Mr. Trash Wheel trash collector in Baltimore, MD. The dataset contains information on year, month, and trash collected, including specific type of trash. There are a total of `r nrow(trashwheel_df)` rows in the final dataset. For available data, the total precipitation in 2018 was `r`. The median number of sports balls collected in 2017 was `r`.
+
+## Problem 2
+
+## Problem 3
