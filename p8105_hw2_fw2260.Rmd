@@ -47,6 +47,7 @@ precip2018_df <-
 ```
 
 Make a dataframe with month names. Combine the two precipitation datasets and join the month dataframe with the result:
+
 ```{r change_month}
 month_df <-
   tibble(
@@ -62,10 +63,12 @@ precip_df <-
 ```
 The Trash Wheel dataset contains information from the Mr. Trash Wheel trash collector located in Baltimore, MD. The dataset provides information on year, month, and amount of trash collected, including specific types of trash. There are a total of `r nrow(trashwheel_df)` rows and `r ncol(trashwheel_df)` columns in the final dataset. For available data, the total precipitation in 2018 was `r sum(pull(precip2018_df, total))` in. The median number of sports balls collected in 2017 was `r median(pull(precip2017_df, total))`.
 
+
 ## Problem 2
 
 Read in and clean the NYC Transit dataset:
-```{r}
+
+```{r clean_nyctransit}
 nyctransit_df <-
   read_csv("./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
   janitor::clean_names() %>% 
@@ -87,8 +90,10 @@ nyctransit_df <-
     route1:route11,
     names_to = "route_name",
     names_prefix = "route",
-    values_to = "route_number")
+    values_to = "route_number") %>% 
+  drop_na(route_number)
 ```
+
 `r nrow(distinct(filter(nyctransit_df, route_number == "A"), line, station_name))` distinct stations serve the A train. Of these stations, `r ` are ADA-compliant.
 
 
@@ -102,7 +107,7 @@ polsmonth_df <-
   read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>% 
   janitor::clean_names() %>% 
   separate(mon, c("year", "month", "day"), "-") %>% 
-  mutate(month = as.numeric(month)) %>% 
+  mutate_at(vars(year:day), as.numeric) %>% 
   left_join(., month_df, by = "month") %>% 
   select(!month) %>%
   relocate(year, month_name, everything()) %>% 
@@ -118,18 +123,18 @@ polsmonth_df <-
   filter(president != "0") %>% 
   select(!c(day, name)) %>% 
   relocate(year, month, president) %>% 
-  arrange(year, month)
+  arrange(year)
 
 snp_df <-
   read_csv("./data/fivethirtyeight_datasets/snp.csv") %>% 
   janitor::clean_names() %>% 
   separate(date, c("month", "day", "year"), "/") %>% 
-  mutate(month = as.numeric(month)) %>% 
+  mutate_at(vars(month:year), as.numeric) %>% 
   left_join(., month_df, by = "month") %>% 
-  select(!month) %>%
+  select(!c(month, day)) %>%
   relocate(year, month_name, everything()) %>% 
   rename(month = month_name) %>% 
-  arrange(year, month)
+  arrange(year)
 
 month_df <-
   mutate(month_df, month_abb = str_to_lower(month.abb))
@@ -146,12 +151,16 @@ unemployment_df <-
   select(!month_abb) %>%
   relocate(year, month_name, everything()) %>% 
   rename(month = month_name) %>% 
-  arrange(year, month)
+  arrange(year)
 ```
 
-Now to merge them:
+Now to merge all three of them together:
 
 ```{r merge_datasets}
-
+fivethirtyeight_df <-
+  left_join(polsmonth_df, snp_df, by = c("year", "month")) %>% 
+  left_join(., unemployment_df, by = c("year", "month")) %>% 
+  relocate(year, month, everything())
 ```
 
+The final dataset is a combination of the pols-month, snp, and unemployment datasets. It contains monthly information on the number of governors, senators, and representatives in each US political party, which party the president was a member of, S&P 500 closing prices, and unemployment rates from `r min(pull(fivethirtyeight_df, year))` to `r max(pull(fivethirtyeight_df, year))`. It is `r nrow(fivethirtyeight_df)` rows by `r ncol(fivethirtyeight_df)` columns.
