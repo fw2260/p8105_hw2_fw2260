@@ -131,4 +131,27 @@ snp_df <-
   rename(month = month_name) %>% 
   arrange(year, month)
 
+month_df <-
+  mutate(month_df, month_abb = str_to_lower(month.abb))
+
+unemployment_df <-
+  read_csv("./data/fivethirtyeight_datasets/unemployment.csv") %>%
+  janitor::clean_names() %>% 
+  pivot_longer(
+    jan:dec,
+    names_to = "month_abb",
+    values_to = "unemployment_rate"
+  ) %>% 
+  left_join(., select(month_df, !month), by = "month_abb") %>% 
+  select(!month_abb) %>%
+  relocate(year, month_name, everything()) %>% 
+  rename(month = month_name) %>% 
+  arrange(year, month)
 ```
+
+Now to merge them:
+
+```{r merge_datasets}
+
+```
+
