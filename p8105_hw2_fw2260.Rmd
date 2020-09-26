@@ -94,7 +94,10 @@ nyctransit_df <-
 
 
 ## Problem 3
-```{r clean_polsmonth}
+
+Import and clean the pols_month, snp, and unemployment datasets:
+
+```{r clean_datasets}
 polsmonth_df <-
   read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>% 
   janitor::clean_names() %>% 
@@ -103,6 +106,29 @@ polsmonth_df <-
   left_join(., month_df, by = "month") %>% 
   select(!month) %>%
   relocate(year, month_name, everything()) %>% 
-  rename(month = month_name)
-```
+  rename(month = month_name) %>% 
+  mutate(
+    prez_gop = replace(prez_gop, prez_gop == "1", "gop"),
+    prez_dem = replace(prez_dem, prez_dem == "1", "dem")
+  ) %>% 
+  pivot_longer(
+    c(prez_gop, prez_dem),
+    values_to = "president"
+  ) %>% 
+  filter(president != "0") %>% 
+  select(!c(day, name)) %>% 
+  relocate(year, month, president) %>% 
+  arrange(year, month)
 
+snp_df <-
+  read_csv("./data/fivethirtyeight_datasets/snp.csv") %>% 
+  janitor::clean_names() %>% 
+  separate(date, c("month", "day", "year"), "/") %>% 
+  mutate(month = as.numeric(month)) %>% 
+  left_join(., month_df, by = "month") %>% 
+  select(!month) %>%
+  relocate(year, month_name, everything()) %>% 
+  rename(month = month_name) %>% 
+  arrange(year, month)
+
+```
