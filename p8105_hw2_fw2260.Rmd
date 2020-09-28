@@ -61,6 +61,7 @@ precip_df <-
   select(year, month_name, total) %>% 
   rename(month = month_name)
 ```
+
 The Trash Wheel dataset contains information from the Mr. Trash Wheel trash collector located in Baltimore, MD. The dataset provides information on year, month, and amount of trash collected, including specific types of trash. There are a total of `r nrow(trashwheel_df)` rows and `r ncol(trashwheel_df)` columns in the final dataset. For available data, the total precipitation in 2018 was `r sum(pull(precip2018_df, total))` in. The median number of sports balls collected in 2017 was `r median(pull(precip2017_df, total))`.
 
 
@@ -76,11 +77,11 @@ nyctransit_df <-
   mutate(entry = if_else(entry == "YES", TRUE, FALSE))
 ```
 
-The NYC Transit dataset contains information such as location, routes served, entrance type, vending availability, entry allowance, and ADA compliance for each entrance and exit of each subway station in NYC. 
+The NYC Transit dataset contains information such as location, routes served, entrance type, vending availability, entry allowance, and ADA compliance for each entrance and exit of each subway station in NYC. So far, the dataset's column names have been changed to snake case, irrelevant information such as location of each entrance and exit have been taken out, and the "entry" variable has been changed from character to logical type.
 
 This dataset currently has `r nrow(nyctransit_df)` rows and `r ncol(nyctransit_df)` columns. There are `r nrow(distinct(nyctransit_df, line, station_name))` distinct stations. There are `r nrow(filter(nyctransit_df, ada == "TRUE"))` ADA-compliant stations. `r nrow(filter(nyctransit_df, vending == "NO" & entry == "TRUE"))` out of `r nrow(filter(nyctransit_df, vending == "NO"))` station entrances/exits without vending allow entrance.  
 
-This dataset is not tidy yet because all the route variables are in their own separate columns and should be combined into just two columns, like this:
+This dataset is not tidy yet because all the route variables are in their own separate columns and should be combined into just two columns of route name and route number, like this:
 
 ```{r combine_routes}
 nyctransit_df <-
@@ -91,16 +92,17 @@ nyctransit_df <-
     names_to = "route_name",
     names_prefix = "route",
     values_to = "route_number") %>% 
-  drop_na(route_number)
+  drop_na(route_number) %>% 
+  relocate(line, station_name, station_latitude, station_longitude, route_name, route_number)
 ```
 
-`r nrow(distinct(filter(nyctransit_df, route_number == "A"), line, station_name))` distinct stations serve the A train. Of these stations, `r ` are ADA-compliant.
+`r nrow(distinct(filter(nyctransit_df, route_number == "A"), line, station_name))` distinct stations serve the A train. Of these stations, `r nrow(distinct(filter(nyctransit_df, route_number == "A", ada == "TRUE"), line, station_name))` are ADA-compliant.
 
 
 
 ## Problem 3
 
-Import and clean the pols_month, snp, and unemployment datasets:
+Import and clean the pols-month, snp, and unemployment datasets:
 
 ```{r clean_datasets}
 polsmonth_df <-
@@ -120,7 +122,7 @@ polsmonth_df <-
     c(prez_gop, prez_dem),
     values_to = "president"
   ) %>% 
-  filter(president != "0") %>% 
+  filter(president == c("gop", "dem")) %>% 
   select(!c(day, name)) %>% 
   relocate(year, month, president) %>% 
   arrange(year)
@@ -135,7 +137,11 @@ snp_df <-
   relocate(year, month_name, everything()) %>% 
   rename(month = month_name) %>% 
   arrange(year)
+```
 
+The unemployment dataset has month names abbreviated, unlike the other datasets, so I will update the month_df dataframe I made earlier containing month names with abbreviated month names then proceed with cleaning:
+
+```{r clean_unemployment}
 month_df <-
   mutate(month_df, month_abb = str_to_lower(month.abb))
 
@@ -163,4 +169,4 @@ fivethirtyeight_df <-
   relocate(year, month, everything())
 ```
 
-The final dataset is a combination of the pols-month, snp, and unemployment datasets. It contains monthly information on the number of governors, senators, and representatives in each US political party, which party the president was a member of, S&P 500 closing prices, and unemployment rates from `r min(pull(fivethirtyeight_df, year))` to `r max(pull(fivethirtyeight_df, year))`. It is `r nrow(fivethirtyeight_df)` rows by `r ncol(fivethirtyeight_df)` columns.
+The final dataset, "fivethirtyeight" is a combination of the "pols-month", "snp", and "unemployment" datasets from FiveThirtyEight, a website with datasets on politics. "pols-month" contains monthly information on the number of governors, senators, and representatives in each US political party and which party the president was a member of from `r min(pull(polsmonth_df, year))` to `r max(pull(polsmonth_df, year))`. "snp" contains monthly S&P 500 closing prices from `r min(pull(snp_df, year))` to `r max(pull(snp_df, year))`. "unemployment" contains monthly unemployment rates from `r min(pull(unemployment_df, year))` to `r max(pull(unemployment_df, year))`.  The final dataset contains all the information listed above and ranged from the year `r min(pull(fivethirtyeight_df, year))` to `r max(pull(fivethirtyeight_df, year))`. It is `r nrow(fivethirtyeight_df)` rows by `r ncol(fivethirtyeight_df)` columns.
