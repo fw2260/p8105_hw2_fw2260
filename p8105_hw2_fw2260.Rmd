@@ -79,7 +79,7 @@ nyctransit_df <-
 
 The NYC Transit dataset contains information such as location, routes served, entrance type, vending availability, entry allowance, and ADA compliance for each entrance and exit of each subway station in NYC. So far, the dataset's column names have been changed to snake case, irrelevant information such as location of each entrance and exit have been taken out, and the "entry" variable has been changed from character to logical type.
 
-This dataset currently has `r nrow(nyctransit_df)` rows and `r ncol(nyctransit_df)` columns. There are `r nrow(distinct(nyctransit_df, line, station_name))` distinct stations. There are `r nrow(filter(nyctransit_df, ada == "TRUE"))` ADA-compliant stations. `r nrow(filter(nyctransit_df, vending == "NO" & entry == "TRUE"))` out of `r nrow(filter(nyctransit_df, vending == "NO"))` station entrances/exits without vending allow entrance.  
+This dataset currently has `r nrow(nyctransit_df)` rows and `r ncol(nyctransit_df)` columns. There are `r nrow(distinct(nyctransit_df, line, station_name))` distinct stations. There are `r nrow(filter(nyctransit_df, ada == "TRUE"))` ADA-compliant non-distinct stations. `r nrow(filter(nyctransit_df, vending == "NO" & entry == "TRUE"))` out of `r nrow(filter(nyctransit_df, vending == "NO"))` station entrances/exits without vending allow entrance (`r nrow(filter(nyctransit_df, vending == "NO" & entry == "TRUE"))/nrow(filter(nyctransit_df, vending == "NO"))`).  
 
 This dataset is not tidy yet because all the route variables are in their own separate columns and should be combined into just two columns of route name and route number, like this:
 
@@ -116,13 +116,14 @@ polsmonth_df <-
   rename(month = month_name) %>% 
   mutate(
     prez_gop = replace(prez_gop, prez_gop == "1", "gop"),
+    prez_gop = replace(prez_gop, prez_gop == "2", "gop_Ford"),
     prez_dem = replace(prez_dem, prez_dem == "1", "dem")
   ) %>% 
   pivot_longer(
     c(prez_gop, prez_dem),
     values_to = "president"
   ) %>% 
-  filter(president == c("gop", "dem")) %>% 
+  filter(president == "0") %>% 
   select(!c(day, name)) %>% 
   relocate(year, month, president) %>% 
   arrange(year)
@@ -169,4 +170,4 @@ fivethirtyeight_df <-
   relocate(year, month, everything())
 ```
 
-The final dataset, "fivethirtyeight" is a combination of the "pols-month", "snp", and "unemployment" datasets from FiveThirtyEight, a website with datasets on politics. "pols-month" contains monthly information on the number of governors, senators, and representatives in each US political party and which party the president was a member of from `r min(pull(polsmonth_df, year))` to `r max(pull(polsmonth_df, year))`. "snp" contains monthly S&P 500 closing prices from `r min(pull(snp_df, year))` to `r max(pull(snp_df, year))`. "unemployment" contains monthly unemployment rates from `r min(pull(unemployment_df, year))` to `r max(pull(unemployment_df, year))`.  The final dataset contains all the information listed above and ranged from the year `r min(pull(fivethirtyeight_df, year))` to `r max(pull(fivethirtyeight_df, year))`. It is `r nrow(fivethirtyeight_df)` rows by `r ncol(fivethirtyeight_df)` columns.
+The final dataset, "fivethirtyeight" is a combination of the "pols-month", "snp", and "unemployment" datasets from FiveThirtyEight, a website with datasets on politics. "pols-month" contains monthly information on the number of governors, senators, and representatives in each US political party and which party the president was a member of from `r min(pull(polsmonth_df, year))` to `r max(pull(polsmonth_df, year))`. "snp" contains monthly S&P 500 closing prices from `r min(pull(snp_df, year))` to `r max(pull(snp_df, year))`. "unemployment" contains monthly unemployment rates from `r min(pull(unemployment_df, year))` to `r max(pull(unemployment_df, year))`. The final dataset contains all the information listed above (Ford's presidency after Nixon is indicated in the "president" column as "gop_Ford") and ranged from the year `r min(pull(fivethirtyeight_df, year))` to `r max(pull(fivethirtyeight_df, year))`. It is `r nrow(fivethirtyeight_df)` rows by `r ncol(fivethirtyeight_df)` columns.
